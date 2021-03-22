@@ -123,6 +123,10 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
      - Specifies which Ingress Controller must handle the TransportServer resource.
      - ``string``
      - No
+   * - ``streamSnippets``
+     - Sets a custom snippet in the ``stream`` context.
+     - ``string``
+     - No
    * - ``serverSnippets``
      - Sets a custom snippet in the ``server`` context.
      - ``string``
@@ -395,8 +399,7 @@ spec:
     port: 80
 ```
 
-Snippets can also be specified for a stream. In the example below, we use snippets to configure [access control](http://nginx.org/en/docs/stream/ngx_stream_access_module.html) and we set the [logging level](http://nginx.org/en/docs/http/ngx_http_limit_conn_module.html#limit_conn_zone) for cases when the server limits the number of connections in a TransportServer:
-
+Snippets can also be specified for a stream. In the example below, we use snippets to [limit the number of connections](https://nginx.org/en/docs/stream/ngx_stream_limit_conn_module.html):
 
 ```yaml
 apiVersion: k8s.nginx.org/v1alpha1
@@ -405,11 +408,8 @@ metadata:
   name: cafe
 spec:
   host: cafe.example.com
-  streamSnippets: |
-    limit_conn_log_level info;
-  serverSnippets: |
-    deny  192.168.1.1;
-    allow 192.168.1.0/24;
+  streamSnippets: limit_conn_zone $binary_remote_addr zone=addr:10m;
+  serverSnippets: limit_conn addr 1;
   upstreams:
   - name: tea
     service: tea-svc
